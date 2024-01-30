@@ -2,7 +2,7 @@
   "ver": "1.0.26",
   "importer": "image",
   "imported": true,
-  "uuid": "edbca368-8f41-4d43-8c1f-e0879dfc8de1",
+  "uuid": "05a7e260-617e-4d80-af60-f039cbb946ff",
   "files": [
     ".json",
     ".png"
@@ -10,8 +10,8 @@
   "subMetas": {
     "6c48a": {
       "importer": "texture",
-      "uuid": "edbca368-8f41-4d43-8c1f-e0879dfc8de1@6c48a",
-      "displayName": "free games",
+      "uuid": "05a7e260-617e-4d80-af60-f039cbb946ff@6c48a",
+      "displayName": "LoadingBar_27",
       "id": "6c48a",
       "name": "texture",
       "userData": {
@@ -22,7 +22,7 @@
         "mipfilter": "none",
         "anisotropy": 0,
         "isUuid": true,
-        "imageUuidOrDatabaseUri": "edbca368-8f41-4d43-8c1f-e0879dfc8de1",
+        "imageUuidOrDatabaseUri": "05a7e260-617e-4d80-af60-f039cbb946ff",
         "visible": false
       },
       "ver": "1.0.22",
@@ -37,6 +37,6 @@
     "hasAlpha": true,
     "type": "texture",
     "fixAlphaTransparencyArtifacts": true,
-    "redirect": "edbca368-8f41-4d43-8c1f-e0879dfc8de1@6c48a"
+    "redirect": "05a7e260-617e-4d80-af60-f039cbb946ff@6c48a"
   }
 }

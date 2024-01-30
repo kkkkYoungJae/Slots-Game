@@ -2,7 +2,7 @@
   "ver": "1.0.26",
   "importer": "image",
   "imported": true,
-  "uuid": "748b28a6-d011-47b5-b25c-c834570c6728",
+  "uuid": "ad91f12d-937c-4dfb-bd69-9477f7bb84b5",
   "files": [
     ".json",
     ".png"
@@ -10,8 +10,8 @@
   "subMetas": {
     "6c48a": {
       "importer": "texture",
-      "uuid": "748b28a6-d011-47b5-b25c-c834570c6728@6c48a",
-      "displayName": "multiplier",
+      "uuid": "ad91f12d-937c-4dfb-bd69-9477f7bb84b5@6c48a",
+      "displayName": "LoadingBar_31",
       "id": "6c48a",
       "name": "texture",
       "userData": {
@@ -22,7 +22,7 @@
         "mipfilter": "none",
         "anisotropy": 0,
         "isUuid": true,
-        "imageUuidOrDatabaseUri": "748b28a6-d011-47b5-b25c-c834570c6728",
+        "imageUuidOrDatabaseUri": "ad91f12d-937c-4dfb-bd69-9477f7bb84b5",
         "visible": false
       },
       "ver": "1.0.22",
@@ -37,6 +37,6 @@
     "hasAlpha": true,
     "type": "texture",
     "fixAlphaTransparencyArtifacts": true,
-    "redirect": "748b28a6-d011-47b5-b25c-c834570c6728@6c48a"
+    "redirect": "ad91f12d-937c-4dfb-bd69-9477f7bb84b5@6c48a"
   }
 }
