@@ -1,4 +1,5 @@
 import {
+  Animation,
   AudioClip,
   AudioSource,
   Component,
@@ -62,6 +63,7 @@ export class Machine extends Component {
     "Frames/FrameBack/spriteFrame",
     "Frames/FrameBack2/spriteFrame",
   ];
+  itemAnimationArray = ["symbolAnim1"];
 
   @property(Node)
   windowLayout1: Node = new Node();
@@ -98,10 +100,14 @@ export class Machine extends Component {
 
   resultArray: number[][] = [];
   layoutArray: Node[] = [];
+  // 애니메이션 동작한 데이터, 한번에 해제하기위해서
+  animatedItemArray: Node[] = [];
+
+  leftReels = [4, 2, 20, 16, 10, 1, 11, 17, 3, 5];
 
   wildIndex = this.itemSpritePathArray.length - 1;
 
-  start() {
+  async start() {
     this.audioSource = this.node.getComponent(AudioSource);
 
     this.itemSpritePathArray.forEach((spritePath) => {
@@ -134,6 +140,9 @@ export class Machine extends Component {
     // Line Active 재설정
     this.setLinesActive();
 
+    // Item Animation 재설정
+    this.setItemsAnimation();
+
     // 롤링할 아이템 갯수설정 +- 5개
     this.num1 = this.getRandomNumber(this.num1 - 5, this.num1 + 5);
     this.num2 = this.getRandomNumber(this.num2 - 5, this.num2 + 5);
@@ -143,12 +152,15 @@ export class Machine extends Component {
 
     // 각 창에 롤링될 그림을 무작위로 추가합니다. (오디오의 길이에 따라 조절됩니다)
     const nums = [this.num1, this.num2, this.num3, this.num4, this.num5];
-    this.layoutArray.map((layout, i) => this.spawnItems(layout, nums[i]));
+    this.layoutArray.map((layout, i) =>
+      this.spawnItems(layout, nums[i], i > 1)
+    );
 
     // 결과를 추가하고 resultArray에 저장합니다
     // 추후에 결과값 비교할때 사용
-    this.resultArray = this.layoutArray.map((layout) =>
-      this.spawnItems(layout, this.horizontalLines)
+    // 12열은 와일드 안나옴
+    this.resultArray = this.layoutArray.map((layout, i) =>
+      this.spawnItems(layout, this.horizontalLines, i > 1)
     );
 
     // 2번쨰 롤링부터는 이전에 했던 결과값이 남아져있어서 이전 결과 행 갯수를 더해줘야함
@@ -174,11 +186,23 @@ export class Machine extends Component {
     this.lines.children.map((line) => (line.active = false));
   }
 
-  spawnItems(layout: Node, count: number) {
+  setItemsAnimation() {
+    this.animatedItemArray.map((item) => {
+      item.children[0].getComponent(Sprite).spriteFrame = null;
+      item.children[1].getComponent(Sprite).spriteFrame = null;
+      item.children[2].getComponent(Animation).stop();
+    });
+    this.animatedItemArray = [];
+  }
+
+  spawnItems(layout: Node, count: number, canCreateWild: boolean) {
     let indexArray = [];
 
     for (let i = 0; i < count; i++) {
-      let index = this.getRandomNumber(0, this.itemSpritePathArray.length - 1);
+      let index = this.getRandomNumber(
+        0,
+        this.itemSpritePathArray.length - (canCreateWild ? 1 : 2)
+      );
 
       let item = this.spawnItem(this.itemSpritePathArray[index]);
 
@@ -186,7 +210,7 @@ export class Machine extends Component {
       indexArray.push(index);
     }
 
-    return indexArray;
+    return indexArray.reverse();
   }
 
   spawnItem(spritePath: string) {
@@ -209,15 +233,19 @@ export class Machine extends Component {
   }
 
   spawnItemFrame(item: Node, payLine: number) {
-    resources.load(this.itemFramePathArray[0], SpriteFrame, (err, asset) => {
-      item.children[1].getComponent(Sprite).spriteFrame = asset;
+    resources.load(
+      this.itemFramePathArray[payLine],
+      SpriteFrame,
+      (err, asset) => {
+        item.children[1].getComponent(Sprite).spriteFrame = asset;
 
-      item.children[1].getComponent(UITransform).width = this.symbolWidth;
-      item.children[1].getComponent(UITransform).height = this.symbolHeight;
-    });
+        item.children[1].getComponent(UITransform).width = this.symbolWidth;
+        item.children[1].getComponent(UITransform).height = this.symbolHeight;
+      }
+    );
 
     resources.load(
-      this.itemFrameBackPathArray[1],
+      this.itemFrameBackPathArray[this.leftReels.indexOf(payLine) ? 1 : 0],
       SpriteFrame,
       (err, asset) => {
         item.children[0].getComponent(Sprite).spriteFrame = asset;
@@ -242,51 +270,51 @@ export class Machine extends Component {
   }
 
   // 롤리이 끝나고 결과 로직
-  rollingEnd() {
+  async rollingEnd() {
     const PAY_LINES = [
-      // Line 1
+      //Line 1
       [1, 1, 1, 1, 1],
-      // Line 2
-      [2, 2, 2, 2, 2],
-      // Line 3
+      //Line 2
       [0, 0, 0, 0, 0],
-      // Line 4
-      [2, 1, 0, 1, 2],
-      // Line 5
+      //Line 3
+      [2, 2, 2, 2, 2],
+      //Line 4
       [0, 1, 2, 1, 0],
-      // Line 6
-      [1, 2, 1, 2, 1],
-      // Line 7
+      //Line 5
+      [2, 1, 0, 1, 2],
+      //Line 6
       [1, 0, 1, 0, 1],
-      // Line 8
-      [2, 2, 1, 0, 0],
-      // Line 9
+      //Line 7
+      [1, 2, 1, 2, 1],
+      //Line 8
       [0, 0, 1, 2, 2],
-      // Line 10
-      [1, 0, 1, 2, 1],
-      // Line 11
+      //Line 9
+      [2, 2, 1, 0, 0],
+      //Line 10
       [1, 2, 1, 0, 1],
-      // Line 12
-      [2, 1, 1, 1, 2],
-      // Line 13
+      //Line 11
+      [1, 0, 1, 2, 1],
+      //Line 12
       [0, 1, 1, 1, 0],
-      // Line 14
-      [2, 1, 2, 1, 2],
-      // Line 15
+      //Line 13
+      [2, 1, 1, 1, 2],
+      //Line 14
       [0, 1, 0, 1, 0],
-      // Line 16
-      [1, 1, 2, 1, 1],
-      // Line 17
+      //Line 15
+      [2, 1, 2, 1, 2],
+      //Line 16
       [1, 1, 0, 1, 1],
-      // Line 18
-      [2, 2, 0, 2, 2],
-      // Line 19
+      //Line 17
+      [1, 1, 2, 1, 1],
+      //Line 18
       [0, 0, 2, 0, 0],
-      // Line 20
-      [2, 0, 0, 0, 2],
+      //Line 19
+      [2, 2, 0, 2, 2],
+      //Line 20
+      [0, 2, 2, 2, 0],
     ];
 
-    const matchLines = [];
+    const matchLines: Record<number, number[]> = {};
 
     for (let i = 0; i < 3; i++) {
       const key = this.resultArray[0][i];
@@ -294,29 +322,51 @@ export class Machine extends Component {
       for (let j = 0; j < PAY_LINES.length; j++) {
         const payLine = PAY_LINES[j];
 
-        // payline과 비교해서 맞는지 여부
+        // payLine과 비교해서 맞는지 여부
         const tempArray: number[] = [];
 
         for (let k = 0; k < this.resultArray.length; k++) {
-          if (
-            key === this.resultArray[k][payLine[k]] ||
-            this.wildIndex === this.resultArray[k][payLine[k]]
-          ) {
+          const target = this.resultArray[k][payLine[k]];
+
+          if (key === target || this.wildIndex === target) {
             tempArray.push(payLine[k]);
           } else break;
         }
 
         if (tempArray.length > 2) {
-          console.log(key + 1, j + 1, tempArray);
-          this.lines.children[j].active = true;
-
-          matchLines.push(tempArray);
+          matchLines[j] = tempArray;
         }
       }
     }
 
     console.log(matchLines);
-    // const item = this.layoutArray[0].children[0];
+
+    for (let key in matchLines) {
+      if (matchLines.hasOwnProperty(key)) {
+        this.setItemsAnimation();
+        this.setLinesActive();
+
+        const value = matchLines[key];
+        this.lines.children[key].active = true;
+
+        for (let i = 0; i < value.length; i++) {
+          const symbolIndex = this.resultArray[i][value[i]];
+          const item = this.layoutArray[i].children[value[i]];
+
+          const anim = item.children[2].getComponent(Animation);
+
+          anim.play(anim.clips[symbolIndex].name);
+
+          this.spawnItemFrame(item, +key);
+
+          this.lines.setSiblingIndex(value.length);
+
+          this.animatedItemArray.push(item);
+        }
+      }
+
+      await this.delay(3000);
+    }
   }
 
   onSpinClicked() {
@@ -384,5 +434,13 @@ export class Machine extends Component {
         this.setLayoutsPosition();
       })
       .start();
+  }
+
+  delay(ms = 0) {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve(1);
+      }, ms);
+    });
   }
 }

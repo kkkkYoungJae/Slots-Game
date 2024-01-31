@@ -31,12 +31,104 @@
         ".json"
       ],
       "subMetas": {}
+    },
+    "f9941": {
+      "importer": "sprite-frame",
+      "uuid": "aa98bb5b-c398-4536-b355-2ac00b33e205@f9941",
+      "displayName": "Symbol1_04",
+      "id": "f9941",
+      "name": "spriteFrame",
+      "userData": {
+        "trimType": "auto",
+        "trimThreshold": 1,
+        "rotated": false,
+        "offsetX": 3,
+        "offsetY": -3,
+        "trimX": 56,
+        "trimY": 31,
+        "width": 146,
+        "height": 196,
+        "rawWidth": 252,
+        "rawHeight": 252,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "packable": true,
+        "pixelsToUnit": 100,
+        "pivotX": 0.5,
+        "pivotY": 0.5,
+        "meshType": 0,
+        "vertices": {
+          "rawPosition": [
+            -73,
+            -98,
+            0,
+            73,
+            -98,
+            0,
+            -73,
+            98,
+            0,
+            73,
+            98,
+            0
+          ],
+          "indexes": [
+            0,
+            1,
+            2,
+            2,
+            1,
+            3
+          ],
+          "uv": [
+            56,
+            221,
+            202,
+            221,
+            56,
+            25,
+            202,
+            25
+          ],
+          "nuv": [
+            0.2222222222222222,
+            0.0992063492063492,
+            0.8015873015873016,
+            0.0992063492063492,
+            0.2222222222222222,
+            0.876984126984127,
+            0.8015873015873016,
+            0.876984126984127
+          ],
+          "minPos": [
+            -73,
+            -98,
+            0
+          ],
+          "maxPos": [
+            73,
+            98,
+            0
+          ]
+        },
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "aa98bb5b-c398-4536-b355-2ac00b33e205@6c48a",
+        "atlasUuid": ""
+      },
+      "ver": "1.0.12",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
     }
   },
   "userData": {
     "hasAlpha": true,
-    "type": "texture",
+    "type": "sprite-frame",
     "fixAlphaTransparencyArtifacts": true,
-    "redirect": "aa98bb5b-c398-4536-b355-2ac00b33e205@6c48a"
+    "redirect": "aa98bb5b-c398-4536-b355-2ac00b33e205@f9941"
   }
 }
