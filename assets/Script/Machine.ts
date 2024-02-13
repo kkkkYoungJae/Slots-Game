@@ -2,7 +2,9 @@ import {
   Animation,
   AudioClip,
   AudioSource,
+  Button,
   Component,
+  Label,
   Node,
   NodePool,
   Prefab,
@@ -15,6 +17,7 @@ import {
   resources,
   tween,
 } from "cc";
+import { PanelSpins } from "./PanelSpins";
 const { ccclass, property } = _decorator;
 
 @ccclass("Machine")
@@ -76,6 +79,35 @@ export class Machine extends Component {
   windowLayout5: Node = new Node();
   @property(Node)
   lines: Node = new Node();
+  @property(Node)
+  reels: Node;
+  @property(Node)
+  win: Node;
+
+  @property(Label)
+  lblPanelLines: Label;
+  @property(Label)
+  lblPanelLineBet: Label;
+  @property(Label)
+  lblPanelTotalBet: Label;
+  @property(Label)
+  lblWin: Label;
+  @property(Label)
+  lblBalance: Label;
+
+  @property(Button)
+  btnLines: Button;
+  @property(Button)
+  btnBetPerLine: Button;
+  @property(Button)
+  btnBetMax: Button;
+  @property(Button)
+  btnSpin: Button;
+  @property(Button)
+  btnAutoStart: Button;
+
+  @property(PanelSpins)
+  panelSpins: PanelSpins;
 
   audioSource: AudioSource = null!;
   @property(AudioClip)
@@ -96,6 +128,7 @@ export class Machine extends Component {
 
   isFirstRoll = true;
   isRolling = false;
+  isAutoRolling = false;
 
   resultArray: number[][] = [];
   layoutArray: Node[] = [];
@@ -104,9 +137,19 @@ export class Machine extends Component {
   // 결과 애니메이션 타이머, 스핀 누르면 초기화됨
   resultAnimTimer: number;
 
+  creditsBalance: number = 0;
+
+  panelLines = 20;
+  panelLineBetArray = [
+    200, 400, 1000, 2000, 4000, 10000, 20000, 40000, 100000, 200000, 400000,
+    1000000, 2000000,
+  ];
+  panelLineBetIndex = 0;
+
   leftReels = [4, 2, 20, 16, 10, 1, 11, 17, 3, 5];
 
   wildIndex = this.itemSpritePathArray.length - 1;
+  bonusIndex = this.itemSpritePathArray.length - 2;
 
   rewardArray = [
     // 9, 10
@@ -134,6 +177,8 @@ export class Machine extends Component {
   ];
 
   start() {
+    this.changeCreditsBalance(50000000);
+
     this.audioSource = this.node.getComponent(AudioSource);
 
     this.itemSpritePathArray.forEach((spritePath) => {
@@ -168,6 +213,9 @@ export class Machine extends Component {
 
     // Item Animation 재설정
     this.setItemsAnimation();
+
+    // Label Win 초기화
+    this.lblWin.string = "0";
 
     // 롤링할 아이템 갯수설정 +- 5개
     this.num1 = this.getRandomNumber(this.num1 - 5, this.num1 + 5);
@@ -336,80 +384,160 @@ export class Machine extends Component {
     ];
 
     const matchLines: { key: number; line: number; value: number[] }[] = [];
+    const rewards: number[] = [];
 
     // 1. 1열에 있는 아이템을 키로 잡는다.
     // 2. 모든 PayLine 패턴을 확인한다.
     // 3. PayLine과 일치한 갯수를 valueArray에 저장한다.
     // 4. matchLines에 저장하여 반복하여 애니메이션 재생
-    // 5. Wild는 모든 심볼을 통용한다.
+    // 5. Wild는 보너스 심볼을 제외한 모든 심볼을 통용한다.
     for (let i = 0; i < 3; i++) {
+      // 비교할 심볼의 실제 번호
       const key = this.resultArray[0][i];
 
-      if (key === this.wildIndex) break;
-
       for (let j = 0; j < PAY_LINES.length; j++) {
+        // [0,1,2,1,2] 형태
         const payLine = PAY_LINES[j];
+        const valueArray: number[] = [i];
 
-        const valueArray: number[] = [];
-
-        for (let k = 0; k < this.resultArray.length; k++) {
-          // 비교할 심볼
+        for (let k = 1; k < this.resultArray.length; k++) {
+          // 비교될 심볼의 실제 번호
           const target = this.resultArray[k][payLine[k]];
+          const isFirstMatch = valueArray[0] === payLine[0];
+          const isKeyMatchBonus = this.bonusIndex === key;
+          const isTargetMatchWild = this.wildIndex === target;
 
-          if (key === target || this.wildIndex === target) {
+          // 0번은 기본으로 넣어놓고 1번부터 비교해서 아래 조건문이 필요함
+          if (
+            isFirstMatch &&
+            (key === target || (isTargetMatchWild && !isKeyMatchBonus))
+          ) {
             valueArray.push(payLine[k]);
           } else break;
         }
 
-        if (valueArray.length > 2) {
+        // 승리조건이 2개인것도 있고 3개이상인것도 있음
+        const reward = this.rewardArray[key][valueArray.length - 1];
+
+        if (valueArray.length > 1 && reward > 0) {
           matchLines.push({ key, line: j, value: valueArray });
+          rewards.push(reward * this.panelLineBetArray[this.panelLineBetIndex]);
         }
       }
     }
 
     console.log(matchLines);
+    console.log(rewards);
 
-    for (let i = 0; i < matchLines.length; i++) {
-      this.setItemsAnimation();
-      this.setLinesActive();
+    const totalReward = rewards.reduce((acc, current) => acc + current, 0);
+    this.lblWin.string = totalReward.toLocaleString();
+    this.changeCreditsBalance(totalReward);
 
-      const target = matchLines[i];
+    const withBonus = matchLines.find((child) => child.key === 11);
 
-      for (let j = 0; j < target.value.length; j++) {
-        const symbolIndex = this.resultArray[j][target.value[j]];
-        const item = this.layoutArray[j].children[target.value[j]];
+    if (withBonus) {
+      this.bonusStage();
+    }
 
-        const anim = item.children[2].getComponent(Animation);
-        anim.play(anim.clips[symbolIndex].name);
-
-        this.spawnItemFrame(item, target.line);
-
-        this.animatedItemArray.push(item);
+    if (this.isAutoRolling && matchLines.length > 0) {
+      const maxIndex = this.findIndexOfMaxValue(rewards);
+      this.playResultAnim(matchLines[maxIndex]);
+    } else {
+      if (matchLines.length > 0) {
+        this.playResultAnim(matchLines[0]);
       }
 
-      // 맞는 갯수에 맞춰 zIndex 조정
-      this.lines.setSiblingIndex(
-        this.resultArray.length + 1 - target.value.length
-      );
+      let index = 1;
+      if (matchLines.length > 1) {
+        this.resultAnimTimer = setInterval(() => {
+          this.playResultAnim(matchLines[index % matchLines.length]);
+          index += 1;
+        }, 3000);
+      }
+    }
 
-      this.lines.children[target.line].active = true;
-
-      const reward = this.rewardArray[target.key][target.value.length - 1];
-
-      console.log(reward * 10000);
-
-      await this.delay(3000);
+    if (this.panelSpins.spins > 0 && this.isAutoRolling) {
+      await this.delay(matchLines.length > 0 ? 3000 : 1000);
+      this.onSpinClicked();
+    } else {
+      this.changeBtnInteractable(true);
+      this.isAutoRolling = false;
     }
   }
 
+  async bonusStage() {
+    console.log("bonus");
+    this.win.active = true;
+    await this.delay(3000);
+    this.win.active = false;
+  }
+
+  playResultAnim(target) {
+    if (!this.isAutoRolling) {
+      this.setItemsAnimation();
+      this.setLinesActive();
+    }
+
+    for (let j = 0; j < target.value.length; j++) {
+      const symbolIndex = this.resultArray[j][target.value[j]];
+      const item = this.layoutArray[j].children[target.value[j]];
+
+      const anim = item.children[2].getComponent(Animation);
+      anim.play(anim.clips[symbolIndex].name);
+
+      this.spawnItemFrame(item, target.line);
+
+      this.animatedItemArray.push(item);
+    }
+
+    // 맞는 갯수에 맞춰 zIndex 조정
+    this.lines.setSiblingIndex(
+      this.resultArray.length + 1 - target.value.length
+    );
+
+    this.lines.children[target.line].active = true;
+  }
+
+  changeBtnInteractable(bool: boolean) {
+    this.btnLines.interactable = bool;
+    this.btnBetMax.interactable = bool;
+    this.btnBetPerLine.interactable = bool;
+    this.btnSpin.interactable = bool;
+    this.btnAutoStart.interactable = bool;
+    this.panelSpins.btnMinus.interactable = bool;
+    this.panelSpins.btnPlus.interactable = bool;
+  }
+
+  changeCreditsBalance(balance: number) {
+    this.creditsBalance += balance;
+    this.lblBalance.string = this.creditsBalance.toLocaleString();
+  }
+
   onSpinClicked() {
-    if (this.isRolling) {
+    if (this.isRolling || (this.isAutoRolling && this.panelSpins.spins === 0))
+      return;
+
+    if (
+      this.creditsBalance -
+        this.panelLines * this.panelLineBetArray[this.panelLineBetIndex] <
+      0
+    ) {
+      this.changeBtnInteractable(true);
+      this.isAutoRolling = false;
       return;
     }
 
-    clearInterval(this.resultAnimTimer);
-
     this.isRolling = true;
+
+    if (this.isAutoRolling) this.panelSpins.onClickMinus();
+
+    this.changeCreditsBalance(
+      -(this.panelLines * this.panelLineBetArray[this.panelLineBetIndex])
+    );
+
+    this.changeBtnInteractable(false);
+
+    clearInterval(this.resultAnimTimer);
 
     this.audioSource.playOneShot(this.handleAudio, 1.5);
 
@@ -471,11 +599,71 @@ export class Machine extends Component {
       .start();
   }
 
+  onClickAutoStart() {
+    if (this.panelSpins.spins > 0) {
+      this.isAutoRolling = true;
+      this.onSpinClicked();
+    }
+  }
+
+  onClickLines() {
+    if (this.panelLines < 20) {
+      this.panelLines += 1;
+    } else {
+      this.panelLines = 10;
+    }
+
+    this.lblPanelLines.string = this.panelLines + "";
+
+    for (let i = 1; i < 21; i++) {
+      this.reels.children[i].getComponent(Button).interactable =
+        this.panelLines >= i;
+    }
+
+    this.lblPanelTotalBet.string = (
+      this.panelLines * this.panelLineBetArray[this.panelLineBetIndex]
+    ).toLocaleString();
+  }
+
+  onClickBetPerLine() {
+    if (this.panelLineBetIndex < this.panelLineBetArray.length - 1) {
+      this.panelLineBetIndex += 1;
+    } else {
+      this.panelLineBetIndex = 0;
+    }
+
+    this.lblPanelLineBet.string =
+      this.panelLineBetArray[this.panelLineBetIndex].toLocaleString();
+
+    this.lblPanelTotalBet.string = (
+      this.panelLines * this.panelLineBetArray[this.panelLineBetIndex]
+    ).toLocaleString();
+  }
+
+  onClickBetMax() {
+    this.panelLineBetIndex = this.panelLineBetArray.length - 1;
+
+    this.lblPanelLineBet.string =
+      this.panelLineBetArray[this.panelLineBetIndex].toLocaleString();
+
+    this.lblPanelTotalBet.string = (
+      this.panelLines * this.panelLineBetArray[this.panelLineBetIndex]
+    ).toLocaleString();
+  }
+
   delay(ms = 0) {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         resolve(1);
       }, ms);
     });
+  }
+
+  findIndexOfMaxValue(array: number[]) {
+    if (array.length === 0) {
+      return -1;
+    }
+    let maxValue = Math.max(...array);
+    return array.lastIndexOf(maxValue);
   }
 }
