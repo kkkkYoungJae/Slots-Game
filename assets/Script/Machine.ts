@@ -94,6 +94,10 @@ export class Machine extends Component {
   lblWin: Label;
   @property(Label)
   lblBalance: Label;
+  @property(Label)
+  lblMultiplied: Label;
+  @property(Label)
+  lblFreeGames: Label;
 
   @property(Button)
   btnLines: Button;
@@ -110,8 +114,6 @@ export class Machine extends Component {
   panelSpins: PanelSpins;
 
   audioSource: AudioSource = null!;
-  @property(AudioClip)
-  handleAudio: AudioClip = new AudioClip();
   @property(AudioClip)
   rollingAudio: AudioClip = new AudioClip();
 
@@ -139,6 +141,8 @@ export class Machine extends Component {
 
   creditsBalance: number = 0;
 
+  multiplied = 0;
+  freegames = 0;
   panelLines = 20;
   panelLineBetArray = [
     200, 400, 1000, 2000, 4000, 10000, 20000, 40000, 100000, 200000, 400000,
@@ -470,6 +474,11 @@ export class Machine extends Component {
     this.win.active = true;
     await this.delay(3000);
     this.win.active = false;
+
+    this.freegames += 15;
+    this.lblFreeGames.string = this.freegames + "";
+    this.multiplied = this.getRandomNumber(2, 5);
+    this.lblMultiplied.string = `x${this.multiplied}`;
   }
 
   playResultAnim(target) {
@@ -539,15 +548,13 @@ export class Machine extends Component {
 
     clearInterval(this.resultAnimTimer);
 
-    this.audioSource.playOneShot(this.handleAudio, 1.5);
-
     if (this.isFirstRoll) {
       this.isFirstRoll = false;
     } else {
       this.setWindowLayoutContent();
     }
 
-    this.audioSource.playOneShot(this.rollingAudio);
+    // this.audioSource.playOneShot(this.rollingAudio);
 
     tween(this.windowLayout1)
       .by(
