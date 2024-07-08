@@ -1,6 +1,6 @@
 # 슬롯 게임
 
-## 1. 소개
+## 소개
 이 프로젝트는 슬롯 게임을 구현한 것입니다. 사용자들은 슬롯을 돌리고, 특정 조합에 따라 다양한 보상을 받을 수 있습니다.
 
 <div align="center">
@@ -26,4 +26,14 @@
 - **Cocos Creator**: 게임 개발에 사용된 엔진.
 - **TypeScript**: 게임 로직을 구현하는 데 사용된 프로그래밍 언어.
 
+## 플레이 영상
  
+[![플레이 영상](https://github.com/kkkkYoungJae/Slots-Game/assets/75121415/52891154-3db1-461f-8006-db642ef16851)](https://github.com/kkkkYoungJae/Slots-Game/assets/75121415/82c6188c-9a2f-4891-ae06-1d15ad1a448f)
+
+
+
+
+
+
+
+
